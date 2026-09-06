@@ -1,0 +1,22 @@
+{
+  "name": "com.warlogic.settings.ugui",
+  "displayName": "Warlogic Settings uGUI",
+  "version": "1.0.0",
+  "description": "uGUI widgets and unified settings window built on the Warlogic.Settings core registry.",
+  "unity": "2021.3",
+  "dependencies": {
+    "com.warlogic.settings": "1.0.0"
+  },
+  "author": {
+    "name": "Maciej Cyranowicz",
+    "url": "https://github.com/Warlander"
+  },
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/Warlander/settings-ugui.git",
+    "type": "git"
+  },
+  "changelogUrl": "https://github.com/Warlander/settings-ugui/blob/master/CHANGELOG.md",
+  "documentationUrl": "https://github.com/Warlander/settings-ugui/blob/master/README.md",
+  "licensesUrl": "https://github.com/Warlander/settings-ugui/blob/master/LICENSE"
+}
