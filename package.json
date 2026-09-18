@@ -1,11 +1,11 @@
 {
   "name": "com.warlogic.settings.ugui",
   "displayName": "Warlogic Settings uGUI",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "uGUI widgets and unified settings window built on the Warlogic.Settings core registry.",
   "unity": "2021.3",
   "dependencies": {
-    "com.warlogic.settings": "1.0.0"
+    "com.warlogic.settings": "1.1.0"
   },
   "author": {
     "name": "Maciej Cyranowicz",

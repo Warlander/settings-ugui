@@ -1,0 +1,24 @@
+{
+    "name": "Warlogic.Settings.Ugui.Tests.Editor",
+    "rootNamespace": "Warlogic.Settings.Ugui.Tests.Editor",
+    "references": [
+        "Warlogic.Settings.Ugui",
+        "Warlogic.Settings",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "referencesOptionalUnityReferences": false
+}

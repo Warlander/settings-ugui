@@ -11,11 +11,13 @@ namespace Warlogic.Settings.Ugui
         {
             public readonly List<ISettingWidget> Widgets = new List<ISettingWidget>();
             public readonly List<GameObject> Roots = new List<GameObject>();
+            public readonly Dictionary<string, RectTransform> Anchors = new Dictionary<string, RectTransform>();
         }
 
         private readonly SettingsRegistry _registry;
         private readonly SettingsWidgetCatalog _catalog;
         private readonly ISettingsWindowView _view;
+        private readonly ISettingsNavigationView _navigationView;
         private readonly Dictionary<string, TabContent> _contentByTab = new Dictionary<string, TabContent>();
         private readonly Dictionary<string, SettingsTabButton> _tabButtons = new Dictionary<string, SettingsTabButton>();
         private string _activeTabId;
@@ -23,15 +25,32 @@ namespace Warlogic.Settings.Ugui
         public event Action<string> TabContentBuilt;
         public event Action<string> ActiveTabChanged;
 
+        public string ActiveTabId => _activeTabId;
+
         public SettingsWindowPresenter(SettingsRegistry registry, SettingsWidgetCatalog catalog, ISettingsWindowView view)
+            : this(registry, catalog, view, null, null)
+        {
+        }
+
+        public SettingsWindowPresenter(
+            SettingsRegistry registry,
+            SettingsWidgetCatalog catalog,
+            ISettingsWindowView view,
+            ISettingsNavigationView navigationView,
+            SettingsDestination? initialDestination = null)
         {
             _registry = registry;
             _catalog = catalog;
             _view = view;
+            _navigationView = navigationView;
             _view.SaveClicked += SaveAll;
             _view.DiscardClicked += DiscardAll;
             BuildTabButtons();
             RefreshFooter();
+            if (initialDestination.HasValue && TryNavigate(initialDestination.Value))
+            {
+                return;
+            }
             if (_registry.Tabs.Count > 0)
             {
                 SelectTab(_registry.Tabs[0].Id);
@@ -64,6 +83,37 @@ namespace Warlogic.Settings.Ugui
             ActiveTabChanged?.Invoke(tabId);
         }
 
+        public bool TryNavigate(SettingsDestination destination)
+        {
+            if (_navigationView == null ||
+                !_registry.TryResolve(destination, out ResolvedSettingsDestination resolved))
+            {
+                return false;
+            }
+
+            string tabId = resolved.Tab.Id;
+            if (!IsTabBuilt(tabId))
+            {
+                BuildTabContent(tabId);
+            }
+
+            if (!resolved.HasSetting)
+            {
+                SelectTab(tabId);
+                _navigationView.ScrollToTop();
+                return true;
+            }
+
+            if (!_contentByTab[tabId].Anchors.TryGetValue(resolved.Setting.Key, out RectTransform anchor))
+            {
+                return false;
+            }
+
+            SelectTab(tabId);
+            _navigationView.Reveal(anchor);
+            return true;
+        }
+
         private void BuildTabButtons()
         {
             foreach (SettingsTab tab in _registry.Tabs)
@@ -81,14 +131,26 @@ namespace Warlogic.Settings.Ugui
             SettingsTab tab = _registry.Tabs.First(t => t.Id == tabId);
             var content = new TabContent();
             string currentGroup = null;
+            RectTransform currentGroupAnchor = null;
             foreach (ISetting setting in tab.Settings)
             {
-                if (setting is IGroupedSetting grouped && grouped.Group != currentGroup)
+                RectTransform settingAnchor = null;
+                if (setting is IGroupedSetting grouped)
                 {
-                    currentGroup = grouped.Group;
-                    SettingsGroupHeader header = _catalog.CreateGroupHeader(currentGroup, _view.ContentRoot);
-                    content.Roots.Add(header.gameObject);
-                    header.gameObject.SetActive(false);
+                    if (grouped.Group != currentGroup)
+                    {
+                        currentGroup = grouped.Group;
+                        SettingsGroupHeader header = _catalog.CreateGroupHeader(currentGroup, _view.ContentRoot);
+                        content.Roots.Add(header.gameObject);
+                        header.gameObject.SetActive(false);
+                        currentGroupAnchor = header.Root;
+                    }
+                    settingAnchor = currentGroupAnchor;
+                }
+                else
+                {
+                    currentGroup = null;
+                    currentGroupAnchor = null;
                 }
                 ISettingWidget widget = _catalog.CreateWidget(setting, _view.ContentRoot);
                 if (widget == null)
@@ -99,6 +161,7 @@ namespace Warlogic.Settings.Ugui
                 widget.Root.gameObject.SetActive(false);
                 content.Widgets.Add(widget);
                 content.Roots.Add(widget.Root.gameObject);
+                content.Anchors[setting.Key] = settingAnchor != null ? settingAnchor : widget.Root;
             }
             _contentByTab[tabId] = content;
             TabContentBuilt?.Invoke(tabId);
